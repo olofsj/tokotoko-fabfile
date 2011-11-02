@@ -10,13 +10,13 @@ setup(
     author_email='olofsj at gmail com',
     url='https://github.com/olofsj/tokotoko-fabfile',
     license='BSD',
-    package_dir={'tokotoko_fabfile': 'fabfile'},
+    package_dir={'tokotoko_fabfile': 'tokotoko_fabfile'},
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
     entry_points = {
         'console_scripts': [
-            'tokotoko-fabfile-path = tokotoko_fabfile.fabfile:print_path',
+            'tokotoko-fabfile-path = tokotoko_fabfile:print_path',
             ],
         }
 
