@@ -37,6 +37,7 @@ def bootstrap():
     if not exists("env"):
         run('virtualenv env')
         run('echo "export DJANGO_SETTINGS=production" >> env/bin/activate')
+        run('echo "export TOKOTOKO_FABFILE_PROJECT=/home/ubuntu/current" >> env/bin/activate')
 
     # Set up Celery
     if CELERY_ACTIVE:
