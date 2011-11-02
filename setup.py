@@ -18,8 +18,7 @@ setup(
         'console_scripts': [
             'tokotoko-fabfile-path = tokotoko_fabfile:print_path',
             ],
-        }
+        },
     scripts=['scripts/tokotoko-fabfile']
-
 )
 
