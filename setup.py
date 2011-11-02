@@ -4,7 +4,7 @@ setup(
     name='tokotoko-fabfile',
     version='0.1',
     description='Fabfile for setting up and managing Django projects on Amazon EC2',
-    long_description=open('README.md', 'm').read(),
+    long_description=open('README.md', 'r').read(),
     keywords='django, fabfile, fabric',
     author='Olof Sjöbergh',
     author_email='olofsj at gmail com',
