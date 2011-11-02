@@ -10,7 +10,7 @@ setup(
     author_email='olofsj at gmail com',
     url='https://github.com/olofsj/tokotoko-fabfile',
     license='BSD',
-    package_dir={'fabfile': 'fabfile'},
+    package_dir={'tokotoko_fabfile': 'fabfile'},
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
