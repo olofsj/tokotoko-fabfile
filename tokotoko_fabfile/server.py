@@ -65,7 +65,9 @@ def bootstrap():
     # Set up cron job for daily backups
     sudo('mkdir -p %s' % BACKUP_DIR)
     sudo('chmod a+rwx %s' % BACKUP_DIR)
-    run('crontab -l > /tmp/crondump')
+    with hide('warnings'):
+        with settings(warn_only=True):
+            run('crontab -l > /tmp/crondump')
     cronjob = '00 19 * * * /home/ubuntu/current/cron.sh > %s/cron.log' % BACKUP_DIR
     run('echo "%s" >> /tmp/crondump' % cronjob)
     run('crontab /tmp/crondump')
