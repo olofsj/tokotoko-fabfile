@@ -1,9 +1,14 @@
 #-*- coding:utf-8 -*-
-import server
-import ec2
-import backup
 from fabric.api import *
 import getpass
+
+try:
+    import server
+    import ec2
+    import backup
+except ImportError:
+    pass
+
 
 @task
 def localhost():
@@ -14,5 +19,5 @@ def localhost():
 
 def print_path():
     import os
-    print os.getcwd()
+    print os.path.dirname(__file__)
 

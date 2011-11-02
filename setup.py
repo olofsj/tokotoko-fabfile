@@ -19,6 +19,7 @@ setup(
             'tokotoko-fabfile-path = tokotoko_fabfile:print_path',
             ],
         }
+    scripts=['scripts/tokotoko-fabfile']
 
 )
 
