@@ -11,3 +11,8 @@ def localhost():
     env.hosts = [user + '@127.0.0.1']
     print "Running on " + unicode(env.hosts)
 
+
+def print_path():
+    import os
+    print os.getcwd()
+

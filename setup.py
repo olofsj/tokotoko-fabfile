@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='tokotoko-fabfile',
+    name='tokotoko_fabfile',
     version='0.1',
     description='Fabfile for setting up and managing Django projects on Amazon EC2',
     long_description=open('README.md', 'r').read(),
@@ -14,5 +14,11 @@ setup(
     include_package_data=True,
     packages=find_packages(),
     zip_safe=False,
+    entry_points = {
+        'console_scripts': [
+            'tokotoko-fabfile-path = tokotoko_fabfile.fabfile:print_path',
+            ],
+        }
+
 )
 
