@@ -126,10 +126,7 @@ def update_and_reload():
     with cd('/home/ubuntu/current'):
         sudo('aptitude install -y $(< requirements.packages)')
         run('~/env/bin/pip install -r requirements.txt')
-        sudo('cp config/etc/init/* /etc/init/')
-        sudo('cp config/etc/nginx/sites-available/* /etc/nginx/sites-available/')
-        sudo('cp config/etc/init.d/* /etc/init.d/')
-        sudo('cp config/etc/default/* /etc/default/')
+        sudo('cp -f -r config/* /')
         with prefix('source ~/env/bin/activate'):
             run('~/current/postinstall')
         with hide('running', 'stdout'):
