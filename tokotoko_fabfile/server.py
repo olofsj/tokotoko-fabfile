@@ -68,7 +68,7 @@ def bootstrap():
     with hide('warnings'):
         with settings(warn_only=True):
             run('crontab -l > /tmp/crondump')
-    cronjob = '00 19 * * * /home/ubuntu/current/cron.sh > %s/cron.log' % BACKUP_DIR
+    cronjob = '00 19 * * * /home/ubuntu/current/cron.sh %s > %s/cron.log' % ('/home/ubuntu/env', BACKUP_DIR)
     run('echo "%s" >> /tmp/crondump' % cronjob)
     run('crontab /tmp/crondump')
 
