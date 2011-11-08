@@ -37,10 +37,6 @@ env.psql_user_password = 'your-password' # FIXME: Handle this better?
 # Gunicorn service name
 GUNICORN_SERVICE_NAME = 'your-service'
 
-# Add project dir to path
-PROJECT_DIR = os.getenv('TOKOTOKO_FABFILE_PROJECT')
-sys.path.append(PROJECT_DIR)
-
 # Django project settings
 django.settings_module('djangosite.settings')
 os.environ['DJANGO_SETTINGS'] = 'production'
