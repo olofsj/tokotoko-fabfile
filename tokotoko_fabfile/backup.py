@@ -3,6 +3,7 @@ import os
 import datetime
 from time import gmtime, strftime
 from fabric.api import *
+from fabric.contrib.files import exists
 from settings import *
 
 env.backupfiles = []
@@ -159,4 +160,38 @@ def restore_postgresql(bucket=None):
     with hide('running'):
         run('rm %s' % filename)
 
+
+@task
+def restore_directories(bucket=None):
+    """Restore backed up directories"""
+
+    if bucket is None:
+        bucket = get_latest_backup()
+
+    timestamp = bucket[-10:]
+
+    for location in DIRS_TO_BACKUP:
+        if exists(location):
+            abort("%s exists, can't restore backup" % location)
+
+        dirname, name = os.path.split(location.rstrip('/'))
+        filename = name + '_' + timestamp + '.tar.gz'
+
+        # Download from S3
+        print "Fetching backup from %s" % bucket
+        with hide('running'):
+            run('s3cmd get %s/%s' % (bucket, filename))
+            run('mkdir -p %s' % dirname)
+            run('mv %s %s' % (filename, dirname))
+            run('cd %s && tar pzxf %s' % (dirname, filename))
+            run('cd %s && rm %s' % (dirname, filename))
+
+
+@task
+def restore(bucket=None):
+    """Restore backup"""
+
+    restore_directories(bucket)
+
+    restore_postgresql(bucket)
 
