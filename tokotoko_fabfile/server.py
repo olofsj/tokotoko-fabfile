@@ -23,6 +23,25 @@ def bootstrap():
     if exists("/var/run/reboot-required"):
         reboot(40)
 
+    # Install and set up PostgreSQL
+    with hide('stdout'):
+        sudo('aptitude install -y postgresql python-psycopg2')
+    sed('/etc/postgresql/9.1/main/pg_hba.conf', 
+            before='(local.*all.*all.*)peer',
+            after='\\1md5',
+            use_sudo=True)
+
+    # Set up s3cmd
+    print "Setting up s3cmd configuration."
+    with hide('running', 'stdout'):
+        run('echo "%s\n%s\n%s\n\n\n\ny\ny\n" | s3cmd --configure' %
+                (EC2_ACCESS_ID, EC2_SECRET_KEY, S3CMD_ENC_PASS))
+
+
+@task
+def setup_project():
+    """Initial setup of project on server"""
+
     # Set up log files for Gunicorn
     sudo('mkdir -p /var/log/gunicorn')
     sudo('touch /var/log/gunicorn/%s.log' % GUNICORN_SERVICE_NAME)
@@ -40,27 +59,14 @@ def bootstrap():
         run('echo "export TOKOTOKO_FABFILE_PROJECT=/home/ubuntu/current" >> env/bin/activate')
 
     # Set up Celery
-    if CELERY_ACTIVE:
+    if USES_CELERY:
         setup_celery()
 
-    # Install and set up PostgreSQL
-    with hide('stdout'):
-        sudo('aptitude install -y postgresql python-psycopg2')
-    sed('/etc/postgresql/9.1/main/pg_hba.conf', 
-            before='(local.*all.*all.*)peer',
-            after='\\1md5',
-            use_sudo=True)
-
+    # Set up database
     create_database()
 
     # Push local repo and update
     deploy()
-
-    # Set up s3cmd
-    print "Setting up s3cmd configuration."
-    with hide('running', 'stdout'):
-        run('echo "%s\n%s\n%s\n\n\n\ny\ny\n" | s3cmd --configure' %
-                (EC2_ACCESS_ID, EC2_SECRET_KEY, S3CMD_ENC_PASS))
 
     # Set up cron job for daily backups
     sudo('mkdir -p %s' % BACKUP_DIR)
@@ -73,7 +79,6 @@ def bootstrap():
     run('crontab /tmp/crondump')
 
 
-@task
 def setup_celery():
     """Set up log files and RabbitMQ for Celery"""
     sudo('mkdir -p /var/log/celery')
@@ -158,13 +163,13 @@ def reload():
     """Restart services"""
     with hide('warnings'):
         with settings(warn_only=True):
-            if CELERY_ACTIVE:
+            if USES_CELERY:
                 sudo('service celeryd stop')
             sudo('service %s stop' % GUNICORN_SERVICE_NAME)
             sudo('service %s start' % GUNICORN_SERVICE_NAME)
             sudo('service nginx start')
             sudo('service nginx reload')
-            if CELERY_ACTIVE:
+            if USES_CELERY:
                 sudo('service celeryd start')
 
 

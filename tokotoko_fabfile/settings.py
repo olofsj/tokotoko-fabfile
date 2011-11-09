@@ -47,7 +47,7 @@ BACKUP_DIR = "/var/backups/your-domain"
 DIRS_TO_BACKUP = (django_settings.MEDIA_ROOT, )
 
 # Active modules
-CELERY_ACTIVE = hasattr(django_settings, 'BROKER_USER')
+USES_CELERY = hasattr(django_settings, 'BROKER_USER')
 
 # Override with project settings if found
 try:
