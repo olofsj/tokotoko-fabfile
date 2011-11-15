@@ -114,8 +114,11 @@ def git_push_from_local():
 
     local('ssh-add %(key_filename)s' % env)
     local('git remote add ec2push ssh://ubuntu@%(host_string)s:22/home/ubuntu/repo' % env)
-    local('git push ec2push %(gitbranch)s' % env)
+    with settings(warn_only=True):
+        result = local('git push ec2push %(gitbranch)s' % env)
     local('git remote rm ec2push')
+    if result.failed:
+        abort("Git push failed.")
 
 
 @task
