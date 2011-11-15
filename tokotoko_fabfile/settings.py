@@ -9,6 +9,8 @@ import libcloud.security
 # This file contains module wide settings that you need to override for your
 # project
 
+PROJECT_NAME = 'your-project-name'
+
 # Amazon EC2 connection settings
 EC2_ACCESS_ID = 'your-ec2-access-id'
 EC2_SECRET_KEY = 'your-ec2-secret-key'
@@ -34,20 +36,24 @@ env.key_filename = os.path.join(os.getenv('HOME'), '.ec2', EC2_KEYNAME + '.pem')
 env.gitbranch = 'master'
 env.psql_user_password = 'your-password' # FIXME: Handle this better?
 
+# Backup settings
+BACKUP_DIR = "/var/backups/your-domain"
+DIRS_TO_BACKUP = []
+
 # Gunicorn service name
 GUNICORN_SERVICE_NAME = 'your-service'
 
 # Django project settings
 django.settings_module('djangosite.settings')
 os.environ['DJANGO_SETTINGS'] = 'production'
-from django.conf import settings as django_settings
-
-# Backup settings
-BACKUP_DIR = "/var/backups/your-domain"
-DIRS_TO_BACKUP = (django_settings.MEDIA_ROOT, )
-
-# Active modules
-USES_CELERY = hasattr(django_settings, 'BROKER_USER')
+try:
+    from django.conf import settings as django_settings
+    DIRS_TO_BACKUP.append(django_settings.MEDIA_ROOT)
+    USES_CELERY = hasattr(django_settings, 'BROKER_USER')
+    USES_DJANGO = True
+except:
+    USES_DJANGO = False
+    USES_CELERY = False
 
 # Override with project settings if found
 try:
