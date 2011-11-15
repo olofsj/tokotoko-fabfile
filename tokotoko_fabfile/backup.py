@@ -53,7 +53,8 @@ def backup_all():
 
     backup_local_folders()
 
-    backup_postgresql()
+    if USES_DJANGO:
+        backup_postgresql()
 
 
 @task
@@ -193,5 +194,6 @@ def restore(bucket=None):
 
     restore_directories(bucket)
 
-    restore_postgresql(bucket)
+    if USES_DJANGO:
+        restore_postgresql(bucket)
 

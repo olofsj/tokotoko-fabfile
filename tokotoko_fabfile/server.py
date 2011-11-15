@@ -43,27 +43,30 @@ def setup_project():
     """Initial setup of project on server"""
 
     # Set up log files for Gunicorn
-    sudo('mkdir -p /var/log/gunicorn')
-    sudo('touch /var/log/gunicorn/%s.log' % GUNICORN_SERVICE_NAME)
-    sudo('chown www-data:adm /var/log/gunicorn')
-    sudo('chown www-data:adm /var/log/gunicorn/%s.log' % GUNICORN_SERVICE_NAME)
+    if USES_DJANGO:
+        sudo('mkdir -p /var/log/gunicorn')
+        sudo('touch /var/log/gunicorn/%s.log' % GUNICORN_SERVICE_NAME)
+        sudo('chown www-data:adm /var/log/gunicorn')
+        sudo('chown www-data:adm /var/log/gunicorn/%s.log' % GUNICORN_SERVICE_NAME)
 
     # Install and set up PIP and Virtualenv
     with hide('stdout'):
         sudo('aptitude install -y python-setuptools')
         sudo('easy_install pip')
         sudo('pip install virtualenv')
-    if not exists("env"):
-        run('virtualenv env')
-        run('echo "export DJANGO_SETTINGS=production" >> env/bin/activate')
-        run('echo "export TOKOTOKO_FABFILE_PROJECT=/home/ubuntu/current" >> env/bin/activate')
+    if not exists("%s/env" % PROJECT_DIR):
+        with cd(PROJECT_DIR):
+            run('virtualenv env')
+            run('echo "export DJANGO_SETTINGS=production" >> env/bin/activate')
+            run('echo "export TOKOTOKO_FABFILE_PROJECT=%s/current" >> env/bin/activate' % PROJECT_DIR)
 
     # Set up Celery
     if USES_CELERY:
         setup_celery()
 
     # Set up database
-    create_database()
+    if USES_DJANGO:
+        create_database()
 
     # Push local repo and update
     deploy()
@@ -74,7 +77,7 @@ def setup_project():
     with hide('warnings'):
         with settings(warn_only=True):
             run('crontab -l > /tmp/crondump')
-    cronjob = '00 19 * * * /home/ubuntu/current/cron.sh %s > %s/cron.log' % ('/home/ubuntu/env', BACKUP_DIR)
+    cronjob = '00 19 * * * %s/current/cron.sh %s > %s/cron.log' % (PROJECT_DIR, os.path.join(PROJECT_DIR, 'env'), BACKUP_DIR)
     run('echo "%s" >> /tmp/crondump' % cronjob)
     run('crontab /tmp/crondump')
 
@@ -106,14 +109,14 @@ def deploy():
 @task
 def git_push_from_local():
     """Push local repo to remote machine"""
-    if not exists("repo"):
+    if not exists("%s/repo" % PROJECT_DIR):
         # Set up bare Git repo to push to
-        run('mkdir -p /home/ubuntu/repo')
-        with cd('/home/ubuntu/repo'):
+        run('mkdir -p %s/repo' % PROJECT_DIR)
+        with cd('%s/repo' % PROJECT_DIR):
             run('git init --bare')
 
     local('ssh-add %(key_filename)s' % env)
-    local('git remote add ec2push ssh://ubuntu@%(host_string)s:22/home/ubuntu/repo' % env)
+    local('git remote add ec2push ssh://ubuntu@%(host_string)s:22%(project_dir)s/repo' % env)
     with settings(warn_only=True):
         result = local('git push ec2push %(gitbranch)s' % env)
     local('git remote rm ec2push')
@@ -125,18 +128,18 @@ def git_push_from_local():
 def update_and_reload():
     """Update from pushed repo and reload services"""
     # Pull updates to checked out location
-    if not exists("current"):
-        run('git clone -b %(gitbranch)s /home/ubuntu/repo current' % env)
-    with cd('/home/ubuntu/current'):
+    if not exists("%s/current" % PROJECT_DIR):
+        run('git clone -b %(gitbranch)s %(project_dir)s/repo current' % env)
+    with cd('%(project_dir)s/current' % env):
         run('git pull')
 
     # Install requirements and run postinstall script
-    with cd('/home/ubuntu/current'):
+    with cd('%(project_dir)s/current' % env):
         sudo('aptitude install -y $(< requirements.packages)')
-        run('~/env/bin/pip install -r requirements.txt')
+        run('../env/bin/pip install -r requirements.txt')
         sudo('cp -f -r config/* /')
         with prefix('source ~/env/bin/activate'):
-            run('~/current/postinstall')
+            run('../current/postinstall')
         with hide('running', 'stdout'):
             output = run('ls config/etc/nginx/sites-available/')
         sites = output.split()
@@ -168,8 +171,9 @@ def reload():
         with settings(warn_only=True):
             if USES_CELERY:
                 sudo('service celeryd stop')
-            sudo('service %s stop' % GUNICORN_SERVICE_NAME)
-            sudo('service %s start' % GUNICORN_SERVICE_NAME)
+            if USES_DJANGO:
+                sudo('service %s stop' % GUNICORN_SERVICE_NAME)
+                sudo('service %s start' % GUNICORN_SERVICE_NAME)
             sudo('service nginx start')
             sudo('service nginx reload')
             if USES_CELERY:

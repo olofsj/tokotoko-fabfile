@@ -61,3 +61,5 @@ try:
 except ImportError:
     pass
 
+PROJECT_DIR = os.path.join('/home/ubuntu/', PROJECT_NAME)
+env.project_dir = PROJECT_DIR
