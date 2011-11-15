@@ -41,6 +41,7 @@ def bootstrap():
 @task
 def setup_project():
     """Initial setup of project on server"""
+    run('mkdir -p %s' % PROJECT_DIR)
 
     # Set up log files for Gunicorn
     if USES_DJANGO:
@@ -129,17 +130,20 @@ def update_and_reload():
     """Update from pushed repo and reload services"""
     # Pull updates to checked out location
     if not exists("%s/current" % PROJECT_DIR):
-        run('git clone -b %(gitbranch)s %(project_dir)s/repo current' % env)
+        run('git clone -b %(gitbranch)s %(project_dir)s/repo %(project_dir)s/current' % env)
     with cd('%(project_dir)s/current' % env):
         run('git pull')
 
     # Install requirements and run postinstall script
     with cd('%(project_dir)s/current' % env):
-        sudo('aptitude install -y $(< requirements.packages)')
-        run('../env/bin/pip install -r requirements.txt')
+        if exists("requirements.packages"):
+            sudo('aptitude install -y $(< requirements.packages)')
+        if exists("requirements.txt"):
+            run('../env/bin/pip install -r requirements.txt')
         sudo('cp -f -r config/* /')
-        with prefix('source ~/env/bin/activate'):
-            run('../current/postinstall')
+        if exists("postinstall"):
+            with prefix('source ../env/bin/activate'):
+                run('%(project_dir)s/current/postinstall' % env)
         with hide('running', 'stdout'):
             output = run('ls config/etc/nginx/sites-available/')
         sites = output.split()
