@@ -33,7 +33,6 @@ def find_project_dir():
 
 # Add project dir to path to be able to load fabfile and Django settings
 project_dir = find_project_dir()
-print "Using project: %s" % project_dir
 sys.path.append(project_dir)
 
 # Load all modules
