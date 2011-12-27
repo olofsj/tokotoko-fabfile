@@ -55,11 +55,10 @@ def setup_project():
         sudo('aptitude install -y python-setuptools')
         sudo('easy_install pip')
         sudo('pip install virtualenv')
-    if not exists("%s/env" % PROJECT_DIR):
-        with cd(PROJECT_DIR):
-            run('virtualenv env')
-            run('echo "export DJANGO_SETTINGS=production" >> env/bin/activate')
-            run('echo "export TOKOTOKO_FABFILE_PROJECT=%s/current" >> env/bin/activate' % PROJECT_DIR)
+    if not exists(ENV_DIR):
+        run('virtualenv %(env_dir)s' % env)
+        run('echo "export DJANGO_SETTINGS=production" >> %(env_dir)s/bin/activate' % env)
+        run('echo "export TOKOTOKO_FABFILE_PROJECT=%(webapp_dir)s" >> %(env_dir)s/bin/activate' % env)
 
     # Set up Celery
     if USES_CELERY:
@@ -78,7 +77,7 @@ def setup_project():
     with hide('warnings'):
         with settings(warn_only=True):
             run('crontab -l > /tmp/crondump')
-    cronjob = '00 19 * * * %s/current/cron.sh %s > %s/cron.log' % (PROJECT_DIR, os.path.join(PROJECT_DIR, 'env'), BACKUP_DIR)
+    cronjob = '00 19 * * * %(webapp_dir)s/cron.sh %(env_dir)s > %(backup_dir)s/cron.log' % env
     run('echo "%s" >> /tmp/crondump' % cronjob)
     run('crontab /tmp/crondump')
 
@@ -110,14 +109,14 @@ def deploy():
 @task
 def git_push_from_local():
     """Push local repo to remote machine"""
-    if not exists("%s/repo" % PROJECT_DIR):
+    if not exists(REPO_DIR):
         # Set up bare Git repo to push to
-        run('mkdir -p %s/repo' % PROJECT_DIR)
-        with cd('%s/repo' % PROJECT_DIR):
+        run('mkdir -p %s' % REPO_DIR)
+        with cd(REPO_DIR):
             run('git init --bare')
 
     local('ssh-add %(key_filename)s' % env)
-    local('git remote add ec2push ssh://ubuntu@%(host_string)s:22%(project_dir)s/repo' % env)
+    local('git remote add ec2push ssh://ubuntu@%(host_string)s:22%(repo_dir)s' % env)
     with settings(warn_only=True):
         result = local('git push ec2push %(gitbranch)s' % env)
     local('git remote rm ec2push')
@@ -129,21 +128,21 @@ def git_push_from_local():
 def update_and_reload():
     """Update from pushed repo and reload services"""
     # Pull updates to checked out location
-    if not exists("%s/current" % PROJECT_DIR):
-        run('git clone -b %(gitbranch)s %(project_dir)s/repo %(project_dir)s/current' % env)
-    with cd('%(project_dir)s/current' % env):
+    if not exists(CHECKOUT_DIR):
+        run('git clone -b %(gitbranch)s %(repo_dir)s %(checkout_dir)s' % env)
+    with cd('%(checkout_dir)s' % env):
         run('git pull')
 
     # Install requirements and run postinstall script
-    with cd('%(project_dir)s/current' % env):
+    with cd('%(webapp_dir)s' % env):
         if exists("requirements.packages"):
             sudo('aptitude install -y $(< requirements.packages)')
         if exists("requirements.txt"):
-            run('../env/bin/pip install -r requirements.txt')
+            run('%(env_dir)s/bin/pip install -r requirements.txt' % env)
         sudo('cp -f -r config/* /')
         if exists("postinstall"):
-            with prefix('source ../env/bin/activate'):
-                run('%(project_dir)s/current/postinstall' % env)
+            with prefix('source %(env_dir)s/bin/activate' % env):
+                run('%(webapp_dir)s/postinstall' % env)
         with hide('running', 'stdout'):
             output = run('ls config/etc/nginx/sites-available/')
         sites = output.split()

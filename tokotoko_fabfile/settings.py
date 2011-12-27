@@ -10,6 +10,7 @@ import libcloud.security
 # project
 
 PROJECT_NAME = 'your-project-name'
+PROJECT_SUBDIR = ''
 
 # Amazon EC2 connection settings
 EC2_ACCESS_ID = 'your-ec2-access-id'
@@ -61,5 +62,15 @@ try:
 except ImportError:
     pass
 
+# Set up some commonly used paths
 PROJECT_DIR = os.path.join('/home/ubuntu/', PROJECT_NAME)
+ENV_DIR = os.path.join(PROJECT_DIR, 'env')
+REPO_DIR = os.path.join(PROJECT_DIR, 'repo')
+CHECKOUT_DIR = os.path.join(PROJECT_DIR, 'current')
+WEBAPP_DIR = os.path.join(CHECKOUT_DIR, PROJECT_SUBDIR)
 env.project_dir = PROJECT_DIR
+env.env_dir = ENV_DIR
+env.repo_dir = REPO_DIR
+env.checkout_dir = CHECKOUT_DIR
+env.webapp_dir = WEBAPP_DIR
+env.backup_dir = BACKUP_DIR
