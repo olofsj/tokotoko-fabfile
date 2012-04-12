@@ -45,6 +45,8 @@ DIRS_TO_BACKUP = []
 GUNICORN_SERVICE_NAME = 'your-service'
 
 # Django project settings
+sys.path.append(os.getcwd())
+sys.path.append(os.path.join(os.getcwd(), 'djangosite'))
 django.settings_module('djangosite.settings')
 os.environ['DJANGO_SETTINGS'] = 'production'
 try:
