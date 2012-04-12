@@ -107,6 +107,14 @@ def deploy():
 
 
 @task
+def quick_deploy():
+    """Quick deploy code and reload services without checking dependencies"""
+    git_push_from_local()
+
+    quick_update_and_reload()
+
+
+@task
 def git_push_from_local():
     """Push local repo to remote machine"""
     if not exists(REPO_DIR):
@@ -122,6 +130,33 @@ def git_push_from_local():
     local('git remote rm ec2push')
     if result.failed:
         abort("Git push failed.")
+
+
+@task
+def quick_update_and_reload():
+    """Quick update from pushed repo and reload services without checking dependencies"""
+    # Pull updates to checked out location
+    if not exists(CHECKOUT_DIR):
+        run('git clone -b %(gitbranch)s %(repo_dir)s %(checkout_dir)s' % env)
+    with cd('%(checkout_dir)s' % env):
+        run('git pull')
+
+    # Run postinstall script
+    with cd('%(webapp_dir)s' % env):
+        sudo('cp -f -r config/* /')
+        if exists("postinstall"):
+            with prefix('source %(env_dir)s/bin/activate' % env):
+                run('%(webapp_dir)s/postinstall' % env)
+        with hide('running', 'stdout'):
+            output = run('ls config/etc/nginx/sites-available/')
+        sites = output.split()
+
+    # Activate all nginx sites
+    for site in sites:
+        if not exists("/etc/nginx/sites-enabled/%s" % site):
+            sudo('ln -s /etc/nginx/sites-available/%s /etc/nginx/sites-enabled/%s' % (site, site))
+
+    reload()
 
 
 @task
