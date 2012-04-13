@@ -77,7 +77,7 @@ def full_backup():
 
 def get_s3_buckets():
     with hide('running'):
-        output = local('s3cmd ls', capture=True)
+        output = local('s3cmd ls | grep %s' % S3_BUCKET_ROOT, capture=True)
     buckets = [l.split('  ', 1)[1] for l in output.splitlines()]
     return buckets
 
