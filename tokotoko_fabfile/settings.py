@@ -3,7 +3,7 @@ import os
 import sys
 from fabric.api import *
 from fabric.contrib import django
-from libcloud.types import Provider
+from libcloud.compute.types import Provider
 import libcloud.security
 
 # This file contains module wide settings that you need to override for your

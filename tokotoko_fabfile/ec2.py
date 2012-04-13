@@ -1,7 +1,7 @@
 #-*- coding:utf-8 -*-
 import time
-from libcloud.providers import get_driver
-from libcloud.base import NodeImage, NodeSize
+from libcloud.compute.providers import get_driver
+from libcloud.compute.base import NodeImage, NodeSize
 from fabric.api import *
 from settings import *
 
